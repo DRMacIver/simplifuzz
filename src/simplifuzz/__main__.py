@@ -12,9 +12,11 @@ TIMEOUT = 10
 
 
 class MainLifecycle(LifeCycle):
-    def __init__(self, corpus, debug):
+    def __init__(self, corpus, label_file, debug):
         self.__corpus = corpus
         self.__debug = debug
+        self.__label_file = label_file
+
 
     def debug(self, msg):
         if self.__debug:
@@ -48,6 +50,10 @@ class MainLifecycle(LifeCycle):
 
     def new_labels(self, labels):
         self.debug("Discovered %d new labels" % (len(labels),))
+        for l in labels:
+            self.__label_file.write(l)
+            self.__label_file.write(b"\n")
+            self.__label_file.flush()
 
 def signal_group(sp, signal):
     gid = os.getpgid(sp.pid)
@@ -119,7 +125,10 @@ def simplifuzz(test, source, working, timeout, debug):
         except OSError:
             pass
 
-    fuzzer = Fuzzer(classify, MainLifecycle(corpus, debug))
+    label_file = open(os.path.join(working, "labels"), "wb")
+
+    fuzzer = Fuzzer(classify, MainLifecycle(corpus, label_file, debug))
+
     for f in os.listdir(corpus):
         path = os.path.join(corpus, f)
         if not os.path.isfile(path):
