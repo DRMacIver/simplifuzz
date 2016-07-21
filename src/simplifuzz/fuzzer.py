@@ -1,5 +1,6 @@
 from sortedcontainers import SortedList
 import hashlib
+from collections import Counter
 
 
 def cache_key(string):
@@ -103,7 +104,8 @@ class Fuzzer(object):
             n -= 1
 
     def __byte_clearing(self, string):
-        for c in sorted(set(string)):
+        counter = Counter(string)
+        for c in sorted(counter, key=lambda x: (-counter[c], c)):
             yield string.replace(bytes([c]), b'')
 
     def __cutter(self, step, size):
