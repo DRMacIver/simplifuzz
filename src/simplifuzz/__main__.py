@@ -25,7 +25,7 @@ class MainLifecycle(LifeCycle):
 
     def shrink_finish(self, shrinker, count):
         self.debug(
-            "Pass %s performed %d shrinks" % (shrinker.__name__, count))
+            "Pass %s made %d changes " % (shrinker.__name__, count))
 
     def __path(self, string):
         return os.path.relpath(os.path.join(
