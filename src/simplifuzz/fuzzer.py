@@ -85,8 +85,6 @@ class Fuzzer(object):
                         i += 1
                 self.__lifecycle.shrink_finish(
                     shrinker, self.__counter - initial_shrinks)
-                if initial_shrinks != self.__counter:
-                    break
 
     def __shrinkers(self):
         n = len(self.__corpus[-1].string)
