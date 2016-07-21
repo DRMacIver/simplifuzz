@@ -87,6 +87,8 @@ class Fuzzer(object):
                     shrinker, self.__counter - initial_shrinks)
 
     def __shrinkers(self):
+        yield self.__byte_clearing
+
         n = len(self.__corpus[-1].string)
         while n > 1:
             yield self.__cutter(n, n)
@@ -99,6 +101,10 @@ class Fuzzer(object):
                 yield self.__cutter(i, n)
                 i //= 2
             n -= 1
+
+    def __byte_clearing(self, string):
+        for c in sorted(set(string)):
+            yield string.replace(bytes([c]), b'')
 
     def __cutter(self, step, size):
         assert step > 0
