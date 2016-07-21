@@ -75,15 +75,12 @@ class Fuzzer(object):
             for shrinker in self.__shrinkers():
                 self.__lifecycle.shrink_start(shrinker)
                 initial_shrinks = self.__counter
-                prev2 = -1
-                while self.__counter != prev2:
-                    prev2 = self.__counter
-                    i = 0
-                    while i < len(self.__corpus):
-                        target = self.__corpus[i].string
-                        for s in shrinker(target):
-                            self.incorporate(s)
-                        i += 1
+                i = 0
+                while i < len(self.__corpus):
+                    target = self.__corpus[i].string
+                    for s in shrinker(target):
+                        self.incorporate(s)
+                    i += 1
                 self.__lifecycle.shrink_finish(
                     shrinker, self.__counter - initial_shrinks)
 
