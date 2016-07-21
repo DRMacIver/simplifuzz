@@ -55,7 +55,6 @@ class Fuzzer(object):
                 l not in self.__strings_by_tag or
                 item < CorpusItem(self.__strings_by_tag[l])
             ):
-                self.__counter += 1
                 self.__incref(string)
                 if l in self.__strings_by_tag:
                     self.__decref(self.__strings_by_tag[l])
@@ -123,6 +122,7 @@ class Fuzzer(object):
         c = self.__refcounts.get(string, 0)
         assert c >= 0
         if c == 0:
+            self.__counter += 1
             self.__corpus.add(CorpusItem(string))
             self.__lifecycle.item_added(string)
         self.__refcounts[string] = c + 1
@@ -131,6 +131,7 @@ class Fuzzer(object):
         assert self.__refcounts[string] > 0
         self.__refcounts[string] -= 1
         if self.__refcounts[string] <= 0:
+            self.__counter += 1
             self.__corpus.remove(CorpusItem(string))
             del self.__refcounts[string]
             self.__lifecycle.item_removed(string)
