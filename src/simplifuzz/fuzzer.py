@@ -105,7 +105,7 @@ class Fuzzer(object):
 
     def __byte_clearing(self, string):
         counter = Counter(string)
-        for c in sorted(counter, key=lambda x: (-counter[c], c)):
+        for c in sorted(counter, key=lambda x: (-counter[x], x)):
             yield string.replace(bytes([c]), b'')
 
     def __cutter(self, step, size):
