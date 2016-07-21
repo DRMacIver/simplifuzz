@@ -35,22 +35,18 @@ class MainLifecycle(LifeCycle):
         p = self.__path(string)
         with open(p, 'wb') as o:
             o.write(string)
-        if self.__debug:
-            print("Created corpus item %r" % (p,))
+        self.debug("Created corpus item %r" % (p,))
 
     def item_removed(self, string):
         p = self.__path(string)
         os.unlink(p)
-        if self.__debug:
-            print("Removed corpus item %r" % (p,))
+        self.debug("Removed corpus item %r" % (p,))
 
     def labels_improved(self, labels):
-        if self.__debug:
-            print("Improved %d labels" % (len(labels),))
+        self.debug("Improved %d labels" % (len(labels),))
 
     def new_labels(self, labels):
-        if self.__debug:
-            print("Discovered %d new labels" % (len(labels),))
+        self.debug("Discovered %d new labels" % (len(labels),))
 
 def signal_group(sp, signal):
     gid = os.getpgid(sp.pid)
