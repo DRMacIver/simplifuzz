@@ -29,7 +29,8 @@ class MainLifecycle(LifeCycle):
 
     def __path(self, string):
         return os.path.relpath(os.path.join(
-            self.__corpus, hashlib.sha1(string).hexdigest()[:8]))
+            self.__corpus, "%d-%s" % (len(string),
+                hashlib.sha1(string).hexdigest()[:8])))
 
     def item_added(self, string):
         p = self.__path(string)
