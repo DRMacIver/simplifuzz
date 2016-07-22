@@ -52,7 +52,7 @@ class MainLifecycle(LifeCycle):
     def new_labels(self, labels):
         self.debug("Discovered %d new labels" % (len(labels),))
         for l in labels:
-            self.__label_file.write(b"%d:%d\n" % l)
+            self.__label_file.write(("%d:%d\n" % l).encode('ascii'))
             self.__label_file.flush()
 
 def signal_group(sp, signal):
