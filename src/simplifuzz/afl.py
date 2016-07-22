@@ -42,45 +42,45 @@ def interrupt_wait_and_kill(sp):
             time.sleep(0.1)
         signal_group(sp, signal.SIGKILL)
 
+SHARED = sysv_ipc.SharedMemory(
+    key=sysv_ipc.IPC_PRIVATE,
+    flags=sysv_ipc.IPC_CREAT,
+    size=AFL_MAP_SIZE, init_character=b'\0')
+
+os.environ[SHM_ENV_VAR] = str(SHARED.id)
+
+ZERO = b'\0' * AFL_MAP_SIZE
 
 def run_program(command, data, timeout=1):
     env = os.environ.copy()
 
-    shared = sysv_ipc.SharedMemory(
-        key=sysv_ipc.IPC_PRIVATE,
-        flags=sysv_ipc.IPC_CREAT,
-        size=AFL_MAP_SIZE, init_character=b'\0')
-    try:
-        env[SHM_ENV_VAR] = str(shared.id)
+    SHARED.write(ZERO)
 
-        sp = subprocess.Popen(
-            command, stdin=subprocess.PIPE,
-            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
-            universal_newlines=False,
-            preexec_fn=os.setsid, shell=True, env=env
-        )
-        timed_out = False
+    sp = subprocess.Popen(
+        command, stdin=subprocess.PIPE,
+        stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+        universal_newlines=False,
+        preexec_fn=os.setsid, shell=True, env=env
+    )
+    timed_out = False
+    try:
         try:
-            try:
-                sp.stdin.write(data)
-                sp.stdin.close()
-            except BrokenPipeError:
-                pass
-            sp.wait(timeout=timeout)
-            returncode = sp.returncode
-        except subprocess.TimeoutExpired as e:
-            timed_out = True
-            returncode = -1
-        except subprocess.CalledProcessError as e:
-            returncode = e.returncode
-        finally:
-            interrupt_wait_and_kill(sp)
-        response_data = shared.read()
+            sp.stdin.write(data)
+            sp.stdin.close()
+        except BrokenPipeError:
+            pass
+        sp.wait(timeout=timeout)
+        returncode = sp.returncode
+    except subprocess.TimeoutExpired as e:
+        timed_out = True
+        returncode = -1
+    except subprocess.CalledProcessError as e:
+        returncode = e.returncode
     finally:
-        shared.remove()
+        interrupt_wait_and_kill(sp)
 
     labels = []
-    for i, c in enumerate(response_data):
+    for i, c in enumerate(SHARED.read()):
         if c > 0:
             labels.append((i, BUCKET_LOOKUP[c]))
     return AFLResponse(returncode, labels, timed_out)
