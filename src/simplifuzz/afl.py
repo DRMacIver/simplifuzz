@@ -3,6 +3,7 @@ import os
 import sysv_ipc
 import subprocess
 import signal
+import time
 
 
 SHM_ENV_VAR = "__AFL_SHM_ID"
