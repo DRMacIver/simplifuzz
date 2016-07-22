@@ -6,6 +6,7 @@ import subprocess
 import click
 import signal
 import time
+from simplifuzz.afl import run_program
 
 
 TIMEOUT = 10
@@ -51,8 +52,7 @@ class MainLifecycle(LifeCycle):
     def new_labels(self, labels):
         self.debug("Discovered %d new labels" % (len(labels),))
         for l in labels:
-            self.__label_file.write(l)
-            self.__label_file.write(b"\n")
+            self.__label_file.write(b"%d:%d\n" % l)
             self.__label_file.flush()
 
 def signal_group(sp, signal):
@@ -89,31 +89,30 @@ def interrupt_wait_and_kill(sp):
 @click.option('--debug', default=False, is_flag=True, help=(
     'Emit (extremely verbose) debug output while shrinking'
 ))
-def simplifuzz(test, source, working, timeout, debug):
+@click.option(
+    '--input', default='-', type=click.Path(resolve_path=True))
+def simplifuzz(test, source, working, timeout, debug, input):
     def classify(string):
-        sp = subprocess.Popen(
-            test, stdin=subprocess.PIPE,
-            stdout=subprocess.PIPE, stderr=subprocess.DEVNULL,
-            universal_newlines=False,
-            preexec_fn=os.setsid, shell=True,
-        )
-        try:
-            result, _ = sp.communicate(string, timeout=timeout)
-        except subprocess.TimeoutExpired:
+        if input == "-":
+            result = run_program(test, string)
+        else:
+            with open(input, 'wb') as o:
+                o.write(string)
+            result = run_program(test, b'')
+        if result.timeout:
             path = os.path.join(
                 timeouts, hashlib.sha1(string).hexdigest()[:8])
             with open(path, 'wb') as o:
                 o.write(string)
             return ()
-        except subprocess.CalledProcessError as e:
+        elif result.status < 0:
             path = os.path.join(
                 crashes, hashlib.sha1(string).hexdigest()[:8])                
             with open(path, 'wb') as o:
                 o.write(string)
             return ()
-        finally:
-            interrupt_wait_and_kill(sp)
-        return set(s.strip() for s in result.split(b'\n'))
+        else:
+            return result.labels
 
     corpus = os.path.join(working, "corpus")
     crashes = os.path.join(working, "crashes")

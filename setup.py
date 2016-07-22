@@ -24,7 +24,7 @@ setup(
         "Programming Language :: Python :: 3.5",
         "Programming Language :: Python :: Implementation :: CPython",
     ],
-    install_requires=['click', 'sortedcontainers'],
+    install_requires=['click', 'sortedcontainers', 'sysv_ipc'],
     long_description=open(README).read(),
     entry_points={
         'console_scripts': [
