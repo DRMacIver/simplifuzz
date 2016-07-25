@@ -34,6 +34,7 @@ class Fuzzer(object):
         self.__refcounts = {}
         self.__classifier = classifier
         self.__seen = set()
+        self.__fully_shrunk = set()
         self.__lifecycle = lifecycle or LifeCycle()
         self.__counter = 0
         self.incorporate(b'')
@@ -68,24 +69,16 @@ class Fuzzer(object):
             self.__lifecycle.labels_improved(improved_labels)
 
     def fuzz(self):
-        prev = -1
-        while self.__counter != prev:
-            prev = self.__counter
-            for shrinker in self.__shrinkers():
-                self.__lifecycle.shrink_start(shrinker)
-                initial_shrinks = self.__counter
-                prev2 = -1
-                while self.__counter != prev2:
-                    prev2 = self.__counter
-                    i = 0
-                    while i < len(self.__corpus):
-                        target = self.__corpus[i].string
-                        for s in shrinker(target):
-                            self.incorporate(s)
-                        i += 1
-                self.__lifecycle.shrink_finish(
-                    shrinker, self.__counter - initial_shrinks)
-                if self.__counter != initial_shrinks:
+        while True:
+            for target in reversed(self.__corpus):
+                key = cache_key(target.string)
+                if key not in self.__fully_shrunk:
+                    for string in self.__shrinks(target.string):
+                        self.incorporate(string)
+                        if target not in self.__corpus:
+                            break
+                    else:
+                        self.__fully_shrunk.add(key)
                     break
 
     def __shrinkers(self):
@@ -103,6 +96,11 @@ class Fuzzer(object):
                 yield self.__cutter(i, n)
                 i //= 2
             n -= 1
+
+    def __shrinks(self, string):
+        for shrinker in self.__shrinkers():
+            for s in shrinker(string):
+                yield s
 
     def __byte_clearing(self, string):
         counter = Counter(string)
